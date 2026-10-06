@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { genKeypair } from "../lib/keys.mjs";
 import { signRecord, contentOf, registry } from "../lib/record.mjs";
 import { part, append, fileFingerprint } from "../src/records.mjs";
-import { verifyPart, checkCertificate, containment } from "../src/verify.mjs";
+import { verifyPart, checkCertificate, checkCertificateFingerprint, containment } from "../src/verify.mjs";
 
 const D = 86400000, T0 = Date.parse("2020-01-01T00:00:00Z");
 const certA = Buffer.from("sample certificate A"), certB = Buffer.from("sample certificate B");
@@ -60,4 +60,10 @@ test("containment finds every part an organization touched, within a time range"
   assert.equal(containment([h, other], "shop").length, 2);
   assert.equal(containment([h], "shop", { from: T0 + 3.5 * D }).length, 0);
   assert.equal(verifyPart(h, { orgs }).ok, true);
+});
+
+test("certificate check from a fingerprint alone", () => {
+  const { orgs, h } = setup();
+  assert.equal(checkCertificateFingerprint(h, fileFingerprint(certB), { orgs }).verdict, "genuine and current");
+  assert.equal(checkCertificateFingerprint(h, "0x" + "00".repeat(32), { orgs }).verdict, "not genuine");
 });

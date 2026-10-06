@@ -56,8 +56,12 @@ export function verifyPart(history, { orgs }) {
 //   genuine  the file's fingerprint appears in the verified history
 //   current  it is the latest certificate (an older one has been superseded by later work)
 export function checkCertificate(history, fileBytes, { orgs }) {
+  return checkCertificateFingerprint(history, fileFingerprint(fileBytes), { orgs });
+}
+
+// The same check from a fingerprint computed where the file is (the file itself need not move).
+export function checkCertificateFingerprint(history, fp, { orgs }) {
   const v = verifyPart(history, { orgs });
-  const fp = fileFingerprint(fileBytes);
   const issued = history.filter((r) => r.kind !== "aviation.handoff/1").map((r) => r.certFp);
   const genuine = v.ok && issued.includes(fp);
   return { historyOk: v.ok, genuine, current: genuine && fp === v.currentCertFp, fingerprint: fp, verdict: !v.ok ? "history does not verify" : !genuine ? "not genuine" : fp === v.currentCertFp ? "genuine and current" : "genuine but superseded" };
